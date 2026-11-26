@@ -4,6 +4,7 @@
 [discovery]
 channels = [
     "@TinaHuang1",
+    "@mattpocockuk",
 ]
 interests = []
 lookback_hours = 72
