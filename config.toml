@@ -26,7 +26,7 @@ chars_per_minute = 240
 style_notes = "自然口语化、逻辑清晰、像一位资深科技播客主理人在与听众聊最新技术动态，避免生硬书面翻译腔。"
 
 [tts]
-voice = "zh-CN-YunxiNeural"
+voice = "zh-CN-YunyangNeural"
 rate = "+0%"
 pitch = "+0Hz"
 max_chunk_chars = 650
