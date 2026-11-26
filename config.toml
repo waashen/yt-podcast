@@ -19,6 +19,7 @@ max_transcript_chars = 12000
 
 [llm]
 provider = "staged"
+# Only used when provider = "gemini" (ignored in "staged" mode, where the Antigravity automation model is used)
 model = "gemini-2.5-flash"
 target_minutes = 15
 language = "zh-CN"
