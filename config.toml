@@ -7,7 +7,7 @@ channels = [
     "@mattpocockuk",
 ]
 interests = []
-lookback_hours = 72
+lookback_hours = 960
 max_results_per_interest = 5
 max_results_per_channel = 3
 max_videos_total = 6
