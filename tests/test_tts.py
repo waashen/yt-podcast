@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import base64
+import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,6 +13,7 @@ from yt_podcast.tts import (
     estimate_mpeg_duration_from_bytes,
     split_script_into_chunks,
     strip_id3_tags,
+    synthesize_chunk_volcengine,
     synthesize_speech,
 )
 
@@ -90,6 +94,80 @@ class TTSTests(unittest.TestCase):
             self.assertEqual(len(calls), 2)
             self.assertTrue(out_mp3.is_file())
             self.assertEqual(dur, 10)
+
+    def test_volcengine_chunk_synthesis_and_errors(self) -> None:
+        frame = make_synthetic_mpeg1_frame()
+        raw_audio = frame * 10
+        captured: dict[str, object] = {}
+
+        def fake_post(url: str, headers: dict[str, str], body: bytes) -> bytes:
+            captured["url"] = url
+            captured["headers"] = headers
+            captured["payload"] = json.loads(body.decode("utf-8"))
+            return json.dumps(
+                {"code": 3000, "message": "Success", "data": base64.b64encode(raw_audio).decode("ascii")}
+            ).encode("utf-8")
+
+        audio = synthesize_chunk_volcengine(
+            text="你好，欢迎收听播客。",
+            voice="zh_male_yangguangqingnian_moon_bigtts",
+            speed_ratio=1.05,
+            app_id="app-123",
+            access_token="tok-xyz",
+            cluster="volcano_tts",
+            http_post=fake_post,
+        )
+        self.assertEqual(audio, raw_audio)
+        self.assertEqual(captured["headers"]["Authorization"], "Bearer;tok-xyz")
+        payload = captured["payload"]
+        assert isinstance(payload, dict)
+        self.assertEqual(payload["app"]["appid"], "app-123")
+        self.assertEqual(payload["audio"]["voice_type"], "zh_male_yangguangqingnian_moon_bigtts")
+        self.assertEqual(payload["audio"]["encoding"], "mp3")
+        self.assertEqual(payload["audio"]["speed_ratio"], 1.05)
+
+        def fail_post(url: str, headers: dict[str, str], body: bytes) -> bytes:
+            return json.dumps({"code": 3001, "message": "Invalid token"}).encode("utf-8")
+
+        with self.assertRaises(RuntimeError) as err:
+            synthesize_chunk_volcengine(
+                text="测试失败",
+                voice="v",
+                speed_ratio=1.0,
+                app_id="app",
+                access_token="bad",
+                http_post=fail_post,
+            )
+        self.assertIn("3001", str(err.exception))
+
+    def test_volcengine_provider_caps_chunks_and_checks_env(self) -> None:
+        frame = make_synthetic_mpeg1_frame()
+        seen_chunks: list[str] = []
+
+        async def fake_synth(text: str, voice: str, rate: str, pitch: str) -> bytes:
+            seen_chunks.append(text)
+            return frame * 10
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_mp3 = Path(tmp) / "volc.mp3"
+            cfg = TTSConfig(provider="volcengine", voice="zh_male_test", max_chunk_chars=650)
+            long_text = ("这是一个用于测试火山引擎分块长度限制的中文句子。" * 25).strip()
+            synthesize_speech(long_text, out_mp3, tts_config=cfg, chunk_synthesizer=fake_synth)
+            self.assertGreater(len(seen_chunks), 1)
+            for ch in seen_chunks:
+                self.assertLessEqual(len(ch), 280)
+
+            old_app = os.environ.pop("VOLCENGINE_APP_ID", None)
+            old_tok = os.environ.pop("VOLCENGINE_ACCESS_TOKEN", None)
+            try:
+                with self.assertRaises(RuntimeError) as err:
+                    synthesize_speech("你好世界", out_mp3, tts_config=cfg)
+                self.assertIn("VOLCENGINE_APP_ID", str(err.exception))
+            finally:
+                if old_app is not None:
+                    os.environ["VOLCENGINE_APP_ID"] = old_app
+                if old_tok is not None:
+                    os.environ["VOLCENGINE_ACCESS_TOKEN"] = old_tok
 
 
 if __name__ == "__main__":

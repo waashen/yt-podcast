@@ -51,17 +51,21 @@ chars_per_minute = 240
 style_notes = "自然口语化、逻辑清晰、像一位资深科技播客主理人在与听众聊最新技术动态，避免生硬书面翻译腔。"
 
 [tts]
-# Edge TTS voice (run `yt-podcast voices` to list available Chinese voices)
-# Popular single-host Mandarin voices:
-#   zh-CN-YunxiNeural    (natural male narrator)
-#   zh-CN-XiaoxiaoNeural (warm female narrator)
-#   zh-CN-YunjianNeural  (broadcast/news male)
-#   zh-CN-XiaoyiNeural   (lively female)
+# TTS provider:
+#   "edge_tts"   - Free Microsoft Edge TTS (no API key)
+#   "volcengine" - Volcengine Doubao OpenSpeech TTS (requires VOLCENGINE_APP_ID + VOLCENGINE_ACCESS_TOKEN in .env)
+provider = "edge_tts"
+# Voice ID:
+#   Edge TTS (run `yt-podcast voices`): zh-CN-YunxiNeural, zh-CN-XiaoxiaoNeural, zh-CN-YunjianNeural
+#   Volcengine Doubao examples: zh_male_yangguangqingnian_moon_bigtts, zh_female_shuangkuaisisi_moon_bigtts
 voice = "zh-CN-YunxiNeural"
 rate = "+0%"
 pitch = "+0Hz"
-# Maximum characters per TTS request chunk
+# Speech speed ratio used by Volcengine (1.0 = normal)
+speed_ratio = 1.0
+# Maximum characters per TTS request chunk (Volcengine is automatically capped at 280 chars)
 max_chunk_chars = 650
+volcengine_cluster = "volcano_tts"
 
 [podcast]
 title = "每日科技精选播客"

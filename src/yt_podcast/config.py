@@ -44,10 +44,14 @@ class LLMConfig:
 
 @dataclass(slots=True)
 class TTSConfig:
+    provider: str = "edge_tts"
     voice: str = "zh-CN-YunxiNeural"
     rate: str = "+0%"
     pitch: str = "+0Hz"
+    speed_ratio: float = 1.0
     max_chunk_chars: int = 650
+    volcengine_cluster: str = "volcano_tts"
+    volcengine_endpoint: str = "https://openspeech.bytedance.com/api/v1/tts"
 
 
 @dataclass(slots=True)
@@ -180,7 +184,7 @@ def load_config(config_path: str | Path = "config.toml") -> AppConfig:
         else _resolve_path(project_root, paths.work_dir)
     )
 
-    _validate_config(discovery, llm, publishing)
+    _validate_config(discovery, llm, tts, publishing)
 
     return AppConfig(
         project_root=project_root,
@@ -197,12 +201,18 @@ def load_config(config_path: str | Path = "config.toml") -> AppConfig:
 def _validate_config(
     discovery: DiscoveryConfig,
     llm: LLMConfig,
+    tts: TTSConfig,
     publishing: PublishingConfig,
 ) -> None:
     if llm.provider not in {"antigravity", "gemini", "staged"}:
         raise ValueError(
             f"Unsupported llm.provider '{llm.provider}'. "
             "Expected one of: antigravity, gemini, staged."
+        )
+    if tts.provider not in {"edge_tts", "volcengine"}:
+        raise ValueError(
+            f"Unsupported tts.provider '{tts.provider}'. "
+            "Expected one of: edge_tts, volcengine."
         )
     if publishing.backend not in {"local", "github_pages", "s3"}:
         raise ValueError(

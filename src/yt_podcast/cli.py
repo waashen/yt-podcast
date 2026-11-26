@@ -10,9 +10,10 @@ import sys
 from typing import Sequence
 
 from yt_podcast.config import AppConfig, load_config
+from yt_podcast.llm import clean_spoken_script, parse_digest_response
 from yt_podcast.pipeline import rebuild_feed, run_pipeline
 from yt_podcast.state import StateStore
-from yt_podcast.tts import list_voices
+from yt_podcast.tts import list_voices, synthesize_speech
 from yt_podcast.youtube import discover_and_prepare_videos
 
 
@@ -142,6 +143,36 @@ def _cmd_voices(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_tts(args: argparse.Namespace) -> int:
+    cfg = load_config(args.config)
+    input_path = Path(args.input).expanduser().resolve()
+    if not input_path.is_file():
+        raise FileNotFoundError(f"Input transcript file not found: {input_path}")
+
+    tts_cfg = cfg.tts
+    if args.provider:
+        if args.provider not in {"edge_tts", "volcengine"}:
+            raise ValueError("Unsupported --provider. Expected: edge_tts or volcengine.")
+        tts_cfg.provider = args.provider
+    if args.voice:
+        tts_cfg.voice = args.voice
+
+    raw_text = input_path.read_text(encoding="utf-8")
+    if "===SPOKEN_SCRIPT===" in raw_text:
+        spoken_text = parse_digest_response(raw_text, videos=[]).spoken_script
+    else:
+        spoken_text = clean_spoken_script(raw_text)
+
+    out_path = Path(args.output).expanduser().resolve()
+    duration = synthesize_speech(spoken_text, out_path, tts_config=tts_cfg)
+    size_bytes = out_path.stat().st_size
+    print(f"MP3 generated: {out_path}")
+    print(f"  Provider   : {tts_cfg.provider} ({tts_cfg.voice})")
+    print(f"  Duration   : {duration}s")
+    print(f"  Size       : {size_bytes} bytes")
+    return 0
+
+
 def _cmd_rebuild_feed(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
     res = rebuild_feed(cfg, publish=not args.no_publish)
@@ -255,6 +286,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_sched.add_argument("-v", "--verbose", action="store_true", help="Enable debug logs.")
     p_sched.set_defaults(func=_cmd_install_schedule)
+
+    p_tts = sub.add_parser(
+        "tts", help="Synthesize an MP3 directly from a Chinese script/transcript file."
+    )
+    p_tts.add_argument("--config", default="config.toml", help="Path to config.toml")
+    p_tts.add_argument("--input", required=True, help="Path to input script/transcript file")
+    p_tts.add_argument("--output", required=True, help="Path to output MP3 file")
+    p_tts.add_argument(
+        "--provider",
+        choices=["edge_tts", "volcengine"],
+        default=None,
+        help="Override tts.provider from config.toml",
+    )
+    p_tts.add_argument("--voice", default=None, help="Override tts.voice from config.toml")
+    p_tts.add_argument("-v", "--verbose", action="store_true", help="Enable debug logs.")
+    p_tts.set_defaults(func=_cmd_tts)
 
     return parser
 

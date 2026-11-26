@@ -1,11 +1,17 @@
-"""Edge TTS synthesis, Chinese/English text chunking, and pure-Python MP3 assembly."""
+"""TTS synthesis (Edge TTS & Volcengine Doubao), chunking, and pure-Python MP3 assembly."""
 
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
+import os
 from pathlib import Path
 import re
+import ssl
 from typing import Awaitable, Callable
+import urllib.request
+import uuid
 
 from yt_podcast.config import TTSConfig
 
@@ -170,6 +176,71 @@ def get_mp3_duration_seconds(mp3_path: Path) -> int:
     return estimate_mpeg_duration_from_bytes(mp3_path.read_bytes())
 
 
+def _build_ssl_context() -> ssl.SSLContext:
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return ssl.create_default_context()
+
+
+def _default_http_post(url: str, headers: dict[str, str], body: bytes) -> bytes:
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    ctx = _build_ssl_context()
+    with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+        return resp.read()
+
+
+def synthesize_chunk_volcengine(
+    text: str,
+    voice: str,
+    speed_ratio: float,
+    app_id: str,
+    access_token: str,
+    cluster: str = "volcano_tts",
+    endpoint: str = "https://openspeech.bytedance.com/api/v1/tts",
+    http_post: Callable[[str, dict[str, str], bytes], bytes] | None = None,
+) -> bytes:
+    """Synthesize one text chunk to MP3 bytes via Volcengine Doubao OpenSpeech v1 TTS."""
+    payload = {
+        "app": {
+            "appid": app_id,
+            "token": access_token,
+            "cluster": cluster,
+        },
+        "user": {"uid": "yt-podcast"},
+        "audio": {
+            "voice_type": voice,
+            "encoding": "mp3",
+            "speed_ratio": speed_ratio,
+            "volume_ratio": 1.0,
+            "pitch_ratio": 1.0,
+        },
+        "request": {
+            "reqid": str(uuid.uuid4()),
+            "text": text,
+            "text_type": "plain",
+            "operation": "query",
+        },
+    }
+    headers = {
+        "Authorization": f"Bearer;{access_token}",
+        "Content-Type": "application/json",
+    }
+    poster = http_post or _default_http_post
+    raw = poster(endpoint, headers, json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+    parsed = json.loads(raw.decode("utf-8"))
+    code = parsed.get("code")
+    if code != 3000:
+        msg = parsed.get("message") or parsed.get("msg") or "Unknown error"
+        raise RuntimeError(f"Volcengine TTS error (code={code}): {msg}")
+    audio_b64 = parsed.get("data")
+    if not isinstance(audio_b64, str) or not audio_b64:
+        raise RuntimeError("Volcengine TTS returned empty audio data.")
+    return base64.b64decode(audio_b64)
+
+
 async def _synthesize_chunk_edge_tts(
     text: str, voice: str, rate: str, pitch: str
 ) -> bytes:
@@ -204,6 +275,36 @@ async def _synthesize_all_chunks_async(
     return results
 
 
+def _build_volcengine_chunk_synthesizer(
+    tts_config: TTSConfig,
+) -> Callable[[str, str, str, str], Awaitable[bytes]]:
+    app_id = os.environ.get("VOLCENGINE_APP_ID", "").strip()
+    access_token = os.environ.get("VOLCENGINE_ACCESS_TOKEN", "").strip()
+    if not app_id or not access_token:
+        raise RuntimeError(
+            "VOLCENGINE_APP_ID and VOLCENGINE_ACCESS_TOKEN must be set in .env "
+            "or environment variables when tts.provider = 'volcengine'."
+        )
+    cluster = (
+        os.environ.get("VOLCENGINE_CLUSTER", "").strip()
+        or tts_config.volcengine_cluster
+    )
+
+    async def _volc_async(text: str, voice: str, rate: str, pitch: str) -> bytes:
+        return await asyncio.to_thread(
+            synthesize_chunk_volcengine,
+            text=text,
+            voice=voice,
+            speed_ratio=tts_config.speed_ratio,
+            app_id=app_id,
+            access_token=access_token,
+            cluster=cluster,
+            endpoint=tts_config.volcengine_endpoint,
+        )
+
+    return _volc_async
+
+
 def synthesize_speech(
     text: str,
     output_mp3: Path,
@@ -211,11 +312,22 @@ def synthesize_speech(
     chunk_synthesizer: Callable[[str, str, str, str], Awaitable[bytes]] | None = None,
 ) -> int:
     """Synthesize spoken script to an MP3 file and return duration in seconds."""
-    chunks = split_script_into_chunks(text, max_chars=tts_config.max_chunk_chars)
+    max_chars = (
+        min(tts_config.max_chunk_chars, 280)
+        if tts_config.provider == "volcengine"
+        else tts_config.max_chunk_chars
+    )
+    chunks = split_script_into_chunks(text, max_chars=max_chars)
     if not chunks:
         raise ValueError("Cannot synthesize empty script text.")
 
-    synth_fn = chunk_synthesizer or _synthesize_chunk_edge_tts
+    if chunk_synthesizer is not None:
+        synth_fn = chunk_synthesizer
+    elif tts_config.provider == "volcengine":
+        synth_fn = _build_volcengine_chunk_synthesizer(tts_config)
+    else:
+        synth_fn = _synthesize_chunk_edge_tts
+
     audio_chunks = asyncio.run(
         _synthesize_all_chunks_async(chunks, tts_config, synth_fn)
     )
