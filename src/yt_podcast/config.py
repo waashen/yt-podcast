@@ -52,6 +52,8 @@ class TTSConfig:
     max_chunk_chars: int = 650
     volcengine_cluster: str = "volcano_tts"
     volcengine_endpoint: str = "https://openspeech.bytedance.com/api/v1/tts"
+    minimax_model: str = "speech-02-hd"
+    minimax_endpoint: str = "https://api.minimax.io/v1/t2a_v2"
 
 
 @dataclass(slots=True)
@@ -209,10 +211,10 @@ def _validate_config(
             f"Unsupported llm.provider '{llm.provider}'. "
             "Expected one of: antigravity, gemini, staged."
         )
-    if tts.provider not in {"edge_tts", "volcengine"}:
+    if tts.provider not in {"edge_tts", "volcengine", "minimax"}:
         raise ValueError(
             f"Unsupported tts.provider '{tts.provider}'. "
-            "Expected one of: edge_tts, volcengine."
+            "Expected one of: edge_tts, volcengine, minimax."
         )
     if publishing.backend not in {"local", "github_pages", "s3"}:
         raise ValueError(

@@ -13,6 +13,7 @@ from yt_podcast.tts import (
     estimate_mpeg_duration_from_bytes,
     split_script_into_chunks,
     strip_id3_tags,
+    synthesize_chunk_minimax,
     synthesize_chunk_volcengine,
     synthesize_speech,
 )
@@ -168,6 +169,68 @@ class TTSTests(unittest.TestCase):
                     os.environ["VOLCENGINE_APP_ID"] = old_app
                 if old_tok is not None:
                     os.environ["VOLCENGINE_ACCESS_TOKEN"] = old_tok
+
+    def test_minimax_chunk_synthesis_and_errors(self) -> None:
+        frame = make_synthetic_mpeg1_frame()
+        raw_audio = frame * 10
+        captured: dict[str, object] = {}
+
+        def fake_post(url: str, headers: dict[str, str], body: bytes) -> bytes:
+            captured["url"] = url
+            captured["headers"] = headers
+            captured["payload"] = json.loads(body.decode("utf-8"))
+            return json.dumps(
+                {
+                    "data": {"audio": raw_audio.hex()},
+                    "base_resp": {"status_code": 0, "status_msg": "success"},
+                }
+            ).encode("utf-8")
+
+        audio = synthesize_chunk_minimax(
+            text="欢迎收听中文科技播客。",
+            voice="Chinese (Mandarin)_Radio_Host",
+            speed_ratio=1.0,
+            api_key="mm-key-123",
+            model="speech-02-hd",
+            group_id="grp-99",
+            http_post=fake_post,
+        )
+        self.assertEqual(audio, raw_audio)
+        self.assertEqual(captured["url"], "https://api.minimax.io/v1/t2a_v2?GroupId=grp-99")
+        self.assertEqual(captured["headers"]["Authorization"], "Bearer mm-key-123")
+        payload = captured["payload"]
+        assert isinstance(payload, dict)
+        self.assertEqual(payload["model"], "speech-02-hd")
+        self.assertEqual(payload["voice_setting"]["voice_id"], "Chinese (Mandarin)_Radio_Host")
+        self.assertEqual(payload["audio_setting"]["format"], "mp3")
+
+        def fail_post(url: str, headers: dict[str, str], body: bytes) -> bytes:
+            return json.dumps(
+                {"base_resp": {"status_code": 1004, "status_msg": "Invalid key"}}
+            ).encode("utf-8")
+
+        with self.assertRaises(RuntimeError) as err:
+            synthesize_chunk_minimax(
+                text="失败测试",
+                voice="v",
+                speed_ratio=1.0,
+                api_key="bad",
+                http_post=fail_post,
+            )
+        self.assertIn("1004", str(err.exception))
+
+    def test_minimax_provider_checks_env(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out_mp3 = Path(tmp) / "mm.mp3"
+            cfg = TTSConfig(provider="minimax", voice="Chinese (Mandarin)_Radio_Host")
+            old_key = os.environ.pop("MINIMAX_API_KEY", None)
+            try:
+                with self.assertRaises(RuntimeError) as err:
+                    synthesize_speech("你好世界", out_mp3, tts_config=cfg)
+                self.assertIn("MINIMAX_API_KEY", str(err.exception))
+            finally:
+                if old_key is not None:
+                    os.environ["MINIMAX_API_KEY"] = old_key
 
 
 if __name__ == "__main__":

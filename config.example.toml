@@ -53,18 +53,22 @@ style_notes = "自然口语化、逻辑清晰、像一位资深科技播客主�
 [tts]
 # TTS provider:
 #   "edge_tts"   - Free Microsoft Edge TTS (no API key)
+#   "minimax"    - MiniMax Audio T2A v2 (requires MINIMAX_API_KEY in .env)
 #   "volcengine" - Volcengine Doubao OpenSpeech TTS (requires VOLCENGINE_APP_ID + VOLCENGINE_ACCESS_TOKEN in .env)
 provider = "edge_tts"
 # Voice ID:
 #   Edge TTS (run `yt-podcast voices`): zh-CN-YunxiNeural, zh-CN-XiaoxiaoNeural, zh-CN-YunjianNeural
+#   MiniMax Mandarin examples: Chinese (Mandarin)_Radio_Host, male-qn-jingying, female-shaonv, female-tianmei
 #   Volcengine Doubao examples: zh_male_yangguangqingnian_moon_bigtts, zh_female_shuangkuaisisi_moon_bigtts
 voice = "zh-CN-YunxiNeural"
 rate = "+0%"
 pitch = "+0Hz"
-# Speech speed ratio used by Volcengine (1.0 = normal)
+# Speech speed ratio used by MiniMax and Volcengine (1.0 = normal)
 speed_ratio = 1.0
 # Maximum characters per TTS request chunk (Volcengine is automatically capped at 280 chars)
 max_chunk_chars = 650
+minimax_model = "speech-02-hd"
+minimax_endpoint = "https://api.minimax.io/v1/t2a_v2"
 volcengine_cluster = "volcano_tts"
 
 [podcast]

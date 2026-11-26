@@ -1,4 +1,4 @@
-"""TTS synthesis (Edge TTS & Volcengine Doubao), chunking, and pure-Python MP3 assembly."""
+"""TTS synthesis (Edge TTS, Volcengine Doubao, MiniMax Audio), chunking, and MP3 assembly."""
 
 from __future__ import annotations
 
@@ -241,6 +241,58 @@ def synthesize_chunk_volcengine(
     return base64.b64decode(audio_b64)
 
 
+def synthesize_chunk_minimax(
+    text: str,
+    voice: str,
+    speed_ratio: float,
+    api_key: str,
+    model: str = "speech-02-hd",
+    endpoint: str = "https://api.minimax.io/v1/t2a_v2",
+    group_id: str = "",
+    http_post: Callable[[str, dict[str, str], bytes], bytes] | None = None,
+) -> bytes:
+    """Synthesize one text chunk to MP3 bytes via MiniMax T2A v2 API."""
+    target_url = endpoint
+    if group_id:
+        sep = "&" if "?" in target_url else "?"
+        target_url = f"{target_url}{sep}GroupId={group_id}"
+
+    payload = {
+        "model": model,
+        "text": text,
+        "stream": False,
+        "voice_setting": {
+            "voice_id": voice,
+            "speed": speed_ratio,
+            "vol": 1.0,
+            "pitch": 0,
+        },
+        "audio_setting": {
+            "sample_rate": 32000,
+            "bitrate": 128000,
+            "format": "mp3",
+            "channel": 1,
+        },
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    poster = http_post or _default_http_post
+    raw = poster(target_url, headers, json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+    parsed = json.loads(raw.decode("utf-8"))
+    base_resp = parsed.get("base_resp") or {}
+    status_code = base_resp.get("status_code")
+    if status_code != 0:
+        status_msg = base_resp.get("status_msg") or "Unknown error"
+        raise RuntimeError(f"MiniMax TTS error (status_code={status_code}): {status_msg}")
+
+    hex_audio = (parsed.get("data") or {}).get("audio")
+    if not isinstance(hex_audio, str) or not hex_audio:
+        raise RuntimeError("MiniMax TTS returned empty audio data.")
+    return bytes.fromhex(hex_audio)
+
+
 async def _synthesize_chunk_edge_tts(
     text: str, voice: str, rate: str, pitch: str
 ) -> bytes:
@@ -305,6 +357,37 @@ def _build_volcengine_chunk_synthesizer(
     return _volc_async
 
 
+def _build_minimax_chunk_synthesizer(
+    tts_config: TTSConfig,
+) -> Callable[[str, str, str, str], Awaitable[bytes]]:
+    api_key = os.environ.get("MINIMAX_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError(
+            "MINIMAX_API_KEY must be set in .env or environment variables "
+            "when tts.provider = 'minimax'."
+        )
+    endpoint = (
+        os.environ.get("MINIMAX_API_URL", "").strip()
+        or tts_config.minimax_endpoint
+    )
+    model = os.environ.get("MINIMAX_MODEL", "").strip() or tts_config.minimax_model
+    group_id = os.environ.get("MINIMAX_GROUP_ID", "").strip()
+
+    async def _minimax_async(text: str, voice: str, rate: str, pitch: str) -> bytes:
+        return await asyncio.to_thread(
+            synthesize_chunk_minimax,
+            text=text,
+            voice=voice,
+            speed_ratio=tts_config.speed_ratio,
+            api_key=api_key,
+            model=model,
+            endpoint=endpoint,
+            group_id=group_id,
+        )
+
+    return _minimax_async
+
+
 def synthesize_speech(
     text: str,
     output_mp3: Path,
@@ -325,6 +408,8 @@ def synthesize_speech(
         synth_fn = chunk_synthesizer
     elif tts_config.provider == "volcengine":
         synth_fn = _build_volcengine_chunk_synthesizer(tts_config)
+    elif tts_config.provider == "minimax":
+        synth_fn = _build_minimax_chunk_synthesizer(tts_config)
     else:
         synth_fn = _synthesize_chunk_edge_tts
 

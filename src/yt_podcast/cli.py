@@ -151,8 +151,10 @@ def _cmd_tts(args: argparse.Namespace) -> int:
 
     tts_cfg = cfg.tts
     if args.provider:
-        if args.provider not in {"edge_tts", "volcengine"}:
-            raise ValueError("Unsupported --provider. Expected: edge_tts or volcengine.")
+        if args.provider not in {"edge_tts", "volcengine", "minimax"}:
+            raise ValueError(
+                "Unsupported --provider. Expected: edge_tts, volcengine, or minimax."
+            )
         tts_cfg.provider = args.provider
     if args.voice:
         tts_cfg.voice = args.voice
@@ -295,7 +297,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_tts.add_argument("--output", required=True, help="Path to output MP3 file")
     p_tts.add_argument(
         "--provider",
-        choices=["edge_tts", "volcengine"],
+        choices=["edge_tts", "volcengine", "minimax"],
         default=None,
         help="Override tts.provider from config.toml",
     )
