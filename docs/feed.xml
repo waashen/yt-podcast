@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <title>每日科技精选播客</title>
+    <link>https://waashen.github.io/yt-podcast/</link>
+    <description>自动追踪关注的 YouTube 频道与技术兴趣主题，提炼核心洞察并翻译生成约 15 分钟的中文音频播客。</description>
+    <language>zh-cn</language>
+    <generator>yt-podcast</generator>
+    <lastBuildDate>Mon, 23 Nov 2026 06:29:58 +0000</lastBuildDate>
+    <atom:link href="https://waashen.github.io/yt-podcast/feed.xml" rel="self" type="application/rss+xml" />
+    <itunes:subtitle>YouTube 频道与前沿技术自动摘要（中文版）</itunes:subtitle>
+    <itunes:author>AI Podcast Digest</itunes:author>
+    <itunes:summary>自动追踪关注的 YouTube 频道与技术兴趣主题，提炼核心洞察并翻译生成约 15 分钟的中文音频播客。</itunes:summary>
+    <itunes:explicit>no</itunes:explicit>
+    <itunes:category text="Technology" />
+    <itunes:owner>
+      <itunes:name>AI Podcast Digest</itunes:name>
+      <itunes:email>podcast@example.com</itunes:email>
+    </itunes:owner>
+    <item>
+      <title>服务器安全惊魂夜：从十年 NGINX 漏洞到斯坦福自我进化 AI 智能体实战</title>
+      <guid isPermaLink="false">yt-podcast-digest_20261123_062958_40c732</guid>
+      <pubDate>Mon, 23 Nov 2026 06:29:58 +0000</pubDate>
+      <description>本期《每日科技精选播客》（2026年11月23日）围绕全网基础设施安全漏洞与 AI 智能体自我进化架构展开深度解读：
+- 剖析最近爆发的三起高危安全事件：Optimizely CDN 脚本投毒供应链攻击、Java 17+ AVX-512 Base64 解码缓冲区溢出漏洞（Java for Shell），以及潜伏十余年的 NGINX HTTP/2 流控整数下溢远程代码执行漏洞。
+- 拆解斯坦福课程中的“自我进化 AI 智能体”三步工程范式：生成器（Generator）、独立只读验证器与标准答案集（Verifier + answer_key），以及分离修改与评估的教练智能体（Coach），探讨如何在不重训权重的前提下持续提升智能体输出质量。
+
+Sources:
+- If you’ve deployed anything since 2015, I have bad news... (Fireship): https://www.youtube.com/watch?v=rMaMe32qQkA
+- How To Build Self-Improving AI Agents with Claude (Stanford's Method) (Austin Marchese): https://www.youtube.com/watch?v=UUg5oij7ptw</description>
+      <itunes:summary>本期《每日科技精选播客》（2026年11月23日）围绕全网基础设施安全漏洞与 AI 智能体自我进化架构展开深度解读：
+- 剖析最近爆发的三起高危安全事件：Optimizely CDN 脚本投毒供应链攻击、Java 17+ AVX-512 Base64 解码缓冲区溢出漏洞（Java for Shell），以及潜伏十余年的 NGINX HTTP/2 流控整数下溢远程代码执行漏洞。
+- 拆解斯坦福课程中的“自我进化 AI 智能体”三步工程范式：生成器（Generator）、独立只读验证器与标准答案集（Verifier + answer_key），以及分离修改与评估的教练智能体（Coach），探讨如何在不重训权重的前提下持续提升智能体输出质量。
+
+Sources:
+- If you’ve deployed anything since 2015, I have bad news... (Fireship): https://www.youtube.com/watch?v=rMaMe32qQkA
+- How To Build Self-Improving AI Agents with Claude (Stanford's Method) (Austin Marchese): https://www.youtube.com/watch?v=UUg5oij7ptw</itunes:summary>
+      <itunes:author>AI Podcast Digest</itunes:author>
+      <itunes:duration>00:17:28</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <enclosure url="https://waashen.github.io/yt-podcast/episodes/digest_20261123_062958_40c732.mp3" length="6285312" type="audio/mpeg" />
+    </item>
+  </channel>
+</rss>
