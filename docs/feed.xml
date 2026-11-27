@@ -6,7 +6,7 @@
     <description>自动追踪关注的 YouTube 频道与技术兴趣主题，提炼核心洞察并翻译生成约 15 分钟的中文音频播客。</description>
     <language>zh-cn</language>
     <generator>yt-podcast</generator>
-    <lastBuildDate>Thu, 26 Nov 2026 06:17:19 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 27 Nov 2026 06:07:02 +0000</lastBuildDate>
     <atom:link href="https://waashen.github.io/yt-podcast/feed.xml" rel="self" type="application/rss+xml" />
     <itunes:subtitle>YouTube 频道与前沿技术自动摘要（中文版）</itunes:subtitle>
     <itunes:author>AI Podcast Digest</itunes:author>
@@ -17,6 +17,33 @@
       <itunes:name>AI Podcast Digest</itunes:name>
       <itunes:email>podcast@example.com</itunes:email>
     </itunes:owner>
+    <item>
+      <title>当执行成本归零：AI时代的个人野心、审美词库与“棕地软件工厂”实战</title>
+      <guid isPermaLink="false">yt-podcast-digest_20261127_060702_cdf6f1</guid>
+      <pubDate>Fri, 27 Nov 2026 06:07:02 +0000</pubDate>
+      <description>当AI让写代码的执行成本趋近于零，工程师的核心价值究竟在哪里？我们又该如何正确搭建全自动的“软件工厂”？本期节目深度拆解来自 AI Engineer 大会的两场重磅演讲：OpenAI 开发者体验团队的 Jason Liu 探讨了在执行免费的时代，如何通过作品主导权、精准的审美语言与跨界好奇心对抗“AI垃圾内容”与替代焦虑；Diffusion 创始人兼 CEO Justin McCarthy 则犀利指出为何要停止盲目用流水线做从零到一的新产品探索，转而用一周时间搭建全天候自动运转的“棕地软件工厂”，持续守护存量系统的性能、成本与安全承诺。
+
+本期节目参考视频来源：
+- Execution Is Free. How Ambitious Are You? — Jason Liu, OpenAI (AI Engineer): https://www.youtube.com/watch?v=bFcob2p6u3A
+- Stop Building Software Factories — Justin McCarthy, Diffusion (AI Engineer): https://www.youtube.com/watch?v=1S4hx3wgvBE
+
+Sources:
+- Execution Is Free. How Ambitious Are You? — Jason Liu, OpenAI (AI Engineer): https://www.youtube.com/watch?v=bFcob2p6u3A
+- Stop Building Software Factories — Justin McCarthy, Diffusion (AI Engineer): https://www.youtube.com/watch?v=1S4hx3wgvBE</description>
+      <itunes:summary>当AI让写代码的执行成本趋近于零，工程师的核心价值究竟在哪里？我们又该如何正确搭建全自动的“软件工厂”？本期节目深度拆解来自 AI Engineer 大会的两场重磅演讲：OpenAI 开发者体验团队的 Jason Liu 探讨了在执行免费的时代，如何通过作品主导权、精准的审美语言与跨界好奇心对抗“AI垃圾内容”与替代焦虑；Diffusion 创始人兼 CEO Justin McCarthy 则犀利指出为何要停止盲目用流水线做从零到一的新产品探索，转而用一周时间搭建全天候自动运转的“棕地软件工厂”，持续守护存量系统的性能、成本与安全承诺。
+
+本期节目参考视频来源：
+- Execution Is Free. How Ambitious Are You? — Jason Liu, OpenAI (AI Engineer): https://www.youtube.com/watch?v=bFcob2p6u3A
+- Stop Building Software Factories — Justin McCarthy, Diffusion (AI Engineer): https://www.youtube.com/watch?v=1S4hx3wgvBE
+
+Sources:
+- Execution Is Free. How Ambitious Are You? — Jason Liu, OpenAI (AI Engineer): https://www.youtube.com/watch?v=bFcob2p6u3A
+- Stop Building Software Factories — Justin McCarthy, Diffusion (AI Engineer): https://www.youtube.com/watch?v=1S4hx3wgvBE</itunes:summary>
+      <itunes:author>AI Podcast Digest</itunes:author>
+      <itunes:duration>00:15:47</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <enclosure url="https://waashen.github.io/yt-podcast/episodes/digest_20261127_060702_cdf6f1.mp3" length="5679216" type="audio/mpeg" />
+    </item>
     <item>
       <title>一千个 Claude 智能体如何证明费马大定理？从 21 人亿元公司到百万行编译器实战</title>
       <guid isPermaLink="false">yt-podcast-digest_20261126_061719_fb67c6</guid>
